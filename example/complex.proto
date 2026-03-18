@@ -1,0 +1,58 @@
+syntax = "proto2";
+
+package ctf.test;
+
+// 1. 全局枚举测试
+enum GlobalStatus {
+    STATUS_UNKNOWN = 0;
+    STATUS_ACTIVE = 1;
+    STATUS_SUSPENDED = 2;
+    STATUS_DELETED = 99; // 测试非连续的 enum 值
+}
+
+// 2. 独立的子消息测试
+message Configuration {
+    required int32 max_retries = 1;
+    optional float timeout_sec = 2;
+    repeated string endpoints = 3; // 测试 repeated 动态数组
+}
+
+// 3. 核心复杂消息体
+message UserRecord {
+    // 测试基础类型
+    required uint64 user_id = 1;
+    required string username = 2;
+    optional bytes public_key = 3;
+    optional GlobalStatus status = 4; // 引用全局枚举
+    
+    // 测试嵌套枚举
+    enum Role {
+        ROLE_GUEST = 0;
+        ROLE_USER = 1;
+        ROLE_ADMIN = 2;
+        ROLE_SUPERADMIN = 1337;
+    }
+    optional Role role = 5;
+
+    // 测试深度嵌套消息
+    message Session {
+        required string session_token = 1;
+        required int64 expire_time = 2;
+        optional bool is_active = 3 [default = true];
+        optional Configuration session_config = 4; // 引用外部消息
+    }
+
+    repeated Session active_sessions = 6; // 测试嵌套消息的 repeated
+    
+    // 测试所有边缘基础类型 (确保类型映射字典完全覆盖)
+    optional double score = 7;
+    optional sfixed32 magic_number = 8;
+    optional sfixed64 large_magic = 9;
+    optional sint32 delta_x = 10;
+    optional sint64 delta_y = 11;
+    optional fixed32 fixed_val = 12;
+    optional fixed64 fixed_val_large = 13;
+    
+    // 测试极大 ID 字段 (防止解析器步长错乱)
+    optional string easter_egg = 999;
+}
