@@ -320,6 +320,7 @@ class ProtoCMiner(idaapi.plugin_t):
                 self.parse_proto(f_desc_ptr)
                 child_name_ptr_off = self.size_t
                 type_str = self.parse_str(self.parse_size_t(f_desc_ptr + child_name_ptr_off))
+
             # 如果是enum，尝试parse enum
             elif type_enum == ProtobufCType.ENUM and f_desc_ptr != 0: 
                 self.parse_enum(f_desc_ptr)
@@ -328,6 +329,12 @@ class ProtoCMiner(idaapi.plugin_t):
             
             # 注意虽然 .proto 的定义不能含有 `.`，但是 .proto 引用其他类型的时候可以含有 .
             # 所以这里不用 type_str = type_str.split('.')[-1] 来处理
+
+            # 跨包引用的时候需要`.``
+            # 如果没有`.`，protoc就没办法区分这是相对路径还是绝对路径
+            if type_enum == ProtobufCType.MESSAGE or type_enum == ProtobufCType.ENUM:
+                type_str = '.' + type_str
+
             node.fields[f_name] = {
                 "label": label_str,
                 "type": type_str,
